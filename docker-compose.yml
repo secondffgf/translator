@@ -1,0 +1,17 @@
+# Ollama runs on another machine — see OLLAMA_HOST. That host must listen on 0.0.0.0:11434 and
+# allow TCP 11434 from this machine.
+#
+# network_mode: host — the app container uses the **same network stack as your Linux host**, so
+# it reaches LAN IPs (e.g. 192.168.0.111) the same way as `curl` on the host. The default Docker
+# bridge often breaks this (errno 113) when VPNs or split routing only apply to the host.
+# Note: `ports:` is ignored with host networking; Streamlit listens on 8501 on the host.
+# Docker Desktop on Mac/Windows may not support host mode fully — run `streamlit run app.py`
+# on the host if the container still cannot reach Ollama.
+
+services:
+  streamlit:
+    build: .
+    network_mode: host
+    environment:
+      OLLAMA_HOST: http://192.168.0.111:11434
+      OLLAMA_MODEL: translategemma:12b
