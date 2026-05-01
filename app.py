@@ -1,43 +1,55 @@
-"""Streamlit UI: German → Ukrainian translation via local Ollama."""
+"""Streamlit UI: translate via local Ollama; language pair from ``APP_LANGUAGE`` or ``--lang``."""
 
 from __future__ import annotations
 
 import os
-import re
 
 import ollama
 import streamlit as st
 
+from languages import load_language
+from settings import get_language_code
+
 DEFAULT_MODEL = os.environ.get("OLLAMA_MODEL", "translategemma")
-SYSTEM_PROMPT = """You are a professional translator.
 
-Task: Translate the user's message from German into Ukrainian.
+try:
+    LANG = load_language(get_language_code())
+except ValueError as e:
+    st.set_page_config(page_title="translategemma", layout="centered")
+    st.error(str(e))
+    st.stop()
 
-Rules:
-- For every verb, give three conjugation forms: infinitive, Präteritum, and past participle with auxiliary.
-- For every noun give gender and article where relevant.
-- Word-by-word section: one German token per line with its Ukrainian gloss on that same line (pattern: `German — Ukrainian (...)`). Never put two German words on one line.
-- After each word line you MUST output a newline character before the next word line. The word-by-word block must not be a single wrapped paragraph — it must be multiple lines like the example.
-- Then output the full Ukrainian sentence on its own after a blank line.
+st.set_page_config(page_title=LANG.page_title, page_icon="🌐", layout="centered")
+st.title(LANG.heading)
+st.caption(LANG.caption)
 
-Critical formatting: Do NOT concatenate all word pairs into one line. Wrong: `Ich — я habe — мати ...` on one line. Correct: five separate lines, one pair per line.
+if "source_text" not in st.session_state:
+    st.session_state.source_text = ""
+if "translation_output" not in st.session_state:
+    st.session_state.translation_output = None
 
-Example format (copy this layout — note line breaks):
-German sentence: Ich habe das Buch gelesen.
+if st.session_state.pop("_clear_source_after_translate", False):
+    st.session_state.source_text = ""
 
-Word-by-word:
-Ich — я
-habe — мати (haben, hatte, hat gehabt)
-das — цей
-Buch — книга (n, das)
-gelesen — читати (lesen, las, hat gelesen)
+model = st.sidebar.text_input("Ollama model name", value=DEFAULT_MODEL, help="Must match `ollama list` on this machine.")
+default_host = os.environ.get("OLLAMA_HOST", "")
+host = st.sidebar.text_input(
+    "Ollama API URL (optional)",
+    value=default_host,
+    placeholder="http://192.168.0.111:11434",
+    help="Base URL of the Ollama API (same machine or remote). Set OLLAMA_HOST or edit here.",
+)
+st.sidebar.caption(f"Language pair: **{LANG.code}** (`APP_LANGUAGE` or `--lang`)")
 
-Full sentence: Я прочитав цю книгу.
-"""
+source = st.text_area(
+    LANG.source_label,
+    height=180,
+    placeholder=LANG.source_placeholder,
+    key="source_text",
+)
 
 
 def _connection_unreachable_hint(exc: BaseException) -> str | None:
-    """Return a short hint for common 'cannot reach Ollama' errors (e.g. errno 113)."""
     errno = getattr(exc, "errno", None)
     text = str(exc).lower()
     if errno == 113 or "no route to host" in text or "[errno 113]" in text:
@@ -60,25 +72,12 @@ def _ollama_client(host: str) -> ollama.Client:
     return ollama.Client(host=h) if h else ollama.Client()
 
 
-def normalize_german_ukrainian_lines(text: str) -> str:
-    """One German–Ukrainian pair per line: insert newlines before each new `… — …` pair."""
-    if not text.strip():
-        return text
-    # German token (allow hyphen compounds); dash may be em dash or ASCII hyphen
-    german_token = r"[A-Za-zäöüÄÖÜß]+(?:-[A-Za-zäöüÄÖÜß]+)?"
-    dash = r"[—\-]"
-    # Space(s) before the next pair: German token, optional spaces, dash, spaces (start of Ukrainian)
-    new_pair = re.compile(rf"(?<!\n)\s+(?={german_token}\s*{dash}\s)")
-    out = new_pair.sub("\n", text)
-    return re.sub(r"\n{3,}", "\n\n", out)
-
-
-def translate_stream(client: ollama.Client, model: str, german_text: str):
+def translate_stream(client: ollama.Client, model: str, source_text: str):
     stream = client.chat(
         model=model,
         messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": german_text},
+            {"role": "system", "content": LANG.system_prompt},
+            {"role": "user", "content": source_text},
         ],
         stream=True,
     )
@@ -88,31 +87,20 @@ def translate_stream(client: ollama.Client, model: str, german_text: str):
             yield content
 
 
-st.set_page_config(page_title="DE → UK (Ollama)", page_icon="🌐", layout="centered")
-st.title("German → Ukrainian")
-st.caption("Powered by Ollama.")
-
-model = st.sidebar.text_input("Ollama model name", value=DEFAULT_MODEL, help="Must match `ollama list` on this machine.")
-default_host = os.environ.get("OLLAMA_HOST", "")
-host = st.sidebar.text_input(
-    "Ollama API URL (optional)",
-    value=default_host,
-    placeholder="http://192.168.0.111:11434",
-    help="Base URL of the Ollama API (same machine or remote). Set OLLAMA_HOST or edit here.",
-)
-
-german = st.text_area("German text", height=180, placeholder="Guten Tag, wie geht es Ihnen?")
-
-if st.button("Translate to Ukrainian", type="primary", disabled=not german.strip()):
+if st.button(LANG.translate_button, type="primary", disabled=not source.strip()):
     try:
         client = _ollama_client(host)
         output_box = st.empty()
         buffer = ""
-        for chunk in translate_stream(client, model, german.strip()):
+        norm = LANG.normalize_output
+        for chunk in translate_stream(client, model, source.strip()):
             buffer += chunk
-            # st.text preserves newlines; formatter splits glued "Word — … word — …" onto separate lines
-            output_box.text(normalize_german_ukrainian_lines(buffer))
-        if not buffer.strip():
+            output_box.text(norm(buffer))
+        if buffer.strip():
+            st.session_state.translation_output = norm(buffer)
+            st.session_state["_clear_source_after_translate"] = True
+            st.rerun()
+        else:
             st.warning("Model returned no text. Check the model name and that Ollama is running.")
     except ollama.ResponseError as e:
         st.error(f"Ollama error: {e}")
@@ -124,5 +112,9 @@ if st.button("Translate to Ukrainian", type="primary", disabled=not german.strip
             st.error(f"{e}\n\n{hint}")
         else:
             st.error(str(e))
+
+if st.session_state.translation_output:
+    st.subheader(LANG.translation_heading)
+    st.text(st.session_state.translation_output)
 
 st.sidebar.markdown("---")

@@ -7,6 +7,19 @@ Small **Streamlit** app that takes **German** text and translates it to **Ukrain
 - [Ollama](https://ollama.com/) with your translation model pulled on the machine that runs it (`ollama list` there).
 - Python 3.12+ **or** Docker with Compose.
 
+## Language pairs
+
+Prompts and UI strings live under **`languages/`**. Each pair defines `PAIR` in its module (e.g. **`languages/de_uk.py`**, **`languages/en_fr.py`**). Register new pairs in **`languages/__init__.py`** (`_REGISTRY`).
+
+Choose the pair **without editing code**:
+
+- **Environment:** `APP_LANGUAGE=de-uk` or `APP_LANGUAGE=en-fr`
+- **CLI (after `--`):**  
+  `streamlit run app.py -- --lang en-fr`  
+  Docker image CMD can append `-- --lang en-fr` if you prefer flags over env.
+
+Default is **`de-uk`**.
+
 ## Run with Docker (recommended)
 
 From this directory:
@@ -92,10 +105,13 @@ That error means **this computer cannot send packets to the IP you configured** 
 | --- | --- |
 | `OLLAMA_MODEL` | Default model name in the sidebar (default: `translategemma`). |
 | `OLLAMA_HOST` | Full base URL for the Ollama API (e.g. `http://192.168.0.111:11434`). Also editable in the sidebar. |
+| `APP_LANGUAGE` | Language pair code: `de-uk`, `en-fr`, … (must exist in `languages/__init__.py`). |
 
 ## Project layout
 
 - `app.py` — Streamlit UI and Ollama chat streaming.
 - `requirements.txt` — Python dependencies.
 - `Dockerfile` — image build and `streamlit run` entrypoint.
-- `docker-compose.yml` — **`network_mode: host`** (Linux), **8501**, and remote Ollama URL.
+- `docker-compose.yml` — **`network_mode: host`** (Linux), **8501**, remote Ollama URL, **`APP_LANGUAGE`**.
+- `languages/` — one module per pair (`de_uk.py`, …): **system prompt**, UI labels, optional **`normalize_output`**.
+- `settings.py` — resolves **`APP_LANGUAGE`** or **`--lang`** / **`--language`**.

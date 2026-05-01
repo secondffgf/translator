@@ -15,3 +15,5 @@ services:
     environment:
       OLLAMA_HOST: http://192.168.0.111:11434
       OLLAMA_MODEL: translategemma:12b
+      # Language pair: de-uk | en-fr (see languages/)
+      APP_LANGUAGE: de-uk
