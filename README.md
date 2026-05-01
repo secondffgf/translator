@@ -9,14 +9,14 @@ Small **Streamlit** app that takes **German** text and translates it to **Ukrain
 
 ## Language pairs
 
-Prompts and UI strings live under **`languages/`**. Each pair defines `PAIR` in its module (e.g. **`languages/de_uk.py`**, **`languages/en_fr.py`**). Register new pairs in **`languages/__init__.py`** (`_REGISTRY`).
+Prompts and UI strings live under **`languages/`**. Each pair defines `PAIR` in its module (e.g. **`languages/de_uk.py`**, **`languages/es_uk.py`**, **`languages/fr_uk.py`**). Register new pairs in **`languages/__init__.py`** (`_REGISTRY`).
 
 Choose the pair **without editing code**:
 
-- **Environment:** `APP_LANGUAGE=de-uk` or `APP_LANGUAGE=en-fr`
+- **Environment:** `APP_LANGUAGE=de-uk`, `es-uk`, or `fr-uk`
 - **CLI (after `--`):**  
-  `streamlit run app.py -- --lang en-fr`  
-  Docker image CMD can append `-- --lang en-fr` if you prefer flags over env.
+  `streamlit run app.py -- --lang es-uk`  
+  Docker image CMD can append `-- --lang es-uk` if you prefer flags over env.
 
 Default is **`de-uk`**.
 
@@ -28,12 +28,22 @@ From this directory:
 docker compose up --build
 ```
 
+Pick the **language pair** without editing YAML (default **`de-uk`**):
+
+```bash
+APP_LANGUAGE=es-uk docker compose up --build
+APP_LANGUAGE=fr-uk docker compose up --build
+```
+
+Or put **`APP_LANGUAGE=es-uk`** in a **`.env`** file next to `docker-compose.yml` (Compose reads it automatically).
+
 Open **http://localhost:8501**.
 
 Ollama is expected on **another machine**. Compose defaults:
 
 - `OLLAMA_HOST=http://192.168.0.111:11434` (edit `docker-compose.yml` if your Ollama host differs)
 - `OLLAMA_MODEL=translategemma:12b`
+- `APP_LANGUAGE` — **`${APP_LANGUAGE:-de-uk}`** in Compose; override as above
 - **`network_mode: host`** (Linux) so the container uses the **same routing as your PC** and can reach `192.168.*` addresses. Without this, Docker’s bridge network sometimes cannot reach the LAN even when `curl` on the host works (VPN / split routing → errno 113).
 
 **Docker Desktop (Mac/Windows):** host networking is limited or unsupported; if the container still cannot reach Ollama, run the app on the host: `streamlit run app.py`.
@@ -105,7 +115,7 @@ That error means **this computer cannot send packets to the IP you configured** 
 | --- | --- |
 | `OLLAMA_MODEL` | Default model name in the sidebar (default: `translategemma`). |
 | `OLLAMA_HOST` | Full base URL for the Ollama API (e.g. `http://192.168.0.111:11434`). Also editable in the sidebar. |
-| `APP_LANGUAGE` | Language pair code: `de-uk`, `en-fr`, … (must exist in `languages/__init__.py`). |
+| `APP_LANGUAGE` | Language pair code: `de-uk`, `es-uk`, `fr-uk`, … (must exist in `languages/__init__.py`). |
 
 ## Project layout
 
@@ -113,5 +123,5 @@ That error means **this computer cannot send packets to the IP you configured** 
 - `requirements.txt` — Python dependencies.
 - `Dockerfile` — image build and `streamlit run` entrypoint.
 - `docker-compose.yml` — **`network_mode: host`** (Linux), **8501**, remote Ollama URL, **`APP_LANGUAGE`**.
-- `languages/` — one module per pair (`de_uk.py`, …): **system prompt**, UI labels, optional **`normalize_output`**.
+- `languages/` — one module per pair (`de_uk.py`, `es_uk.py`, …): **system prompt**, UI labels, optional **`normalize_output`**.
 - `settings.py` — resolves **`APP_LANGUAGE`** or **`--lang`** / **`--language`**.

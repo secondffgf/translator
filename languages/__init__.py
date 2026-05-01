@@ -1,4 +1,4 @@
-"""Load a ``LanguagePair`` by code (see ``languages.de_uk``, ``languages.en_fr``, …)."""
+"""Load a ``LanguagePair`` by code (see ``languages.de_uk``, ``languages.es_uk``, …)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,8 @@ from languages.profile import LanguagePair
 
 _REGISTRY: dict[str, str] = {
     "de-uk": "languages.de_uk",
-    "en-fr": "languages.en_fr",
+    "es-uk": "languages.es_uk",
+    "fr-uk": "languages.fr_uk",
 }
 
 
