@@ -17,5 +17,5 @@ services:
       OLLAMA_MODEL: translategemma:12b
       # Language pair: set when running Compose, e.g. APP_LANGUAGE=es-uk docker compose up
       # Or add APP_LANGUAGE=... to a `.env` file in this directory (Compose loads it).
-      # Codes: de-uk | es-uk | fr-uk — see languages/
+      # Codes: de-uk | es-uk | fr-uk | pl-uk — see languages/
       APP_LANGUAGE: ${APP_LANGUAGE:-de-uk}

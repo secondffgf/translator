@@ -6,6 +6,7 @@ import os
 
 import ollama
 import streamlit as st
+import streamlit.components.v1 as components
 
 from languages import load_language
 from settings import get_language_code
@@ -31,22 +32,31 @@ if "translation_output" not in st.session_state:
 if st.session_state.pop("_clear_source_after_translate", False):
     st.session_state.source_text = ""
 
-model = st.sidebar.text_input("Ollama model name", value=DEFAULT_MODEL, help="Must match `ollama list` on this machine.")
-default_host = os.environ.get("OLLAMA_HOST", "")
-host = st.sidebar.text_input(
-    "Ollama API URL (optional)",
-    value=default_host,
-    placeholder="http://192.168.0.111:11434",
-    help="Base URL of the Ollama API (same machine or remote). Set OLLAMA_HOST or edit here.",
-)
-st.sidebar.caption(f"Language pair: **{LANG.code}** (`APP_LANGUAGE` or `--lang`)")
 
-source = st.text_area(
-    LANG.source_label,
-    height=180,
-    placeholder=LANG.source_placeholder,
-    key="source_text",
-)
+_FOCUS_SOURCE_TEXTAREA = """
+<script>
+(function () {
+  const doc = window.parent.document;
+  let ta = doc.querySelector("section.main textarea");
+  if (!ta) {
+    ta = doc.querySelector('[data-testid="stAppViewContainer"] textarea');
+  }
+  if (!ta) {
+    ta = doc.querySelector("textarea");
+  }
+  if (ta) {
+    ta.focus();
+    const n = ta.value.length;
+    ta.setSelectionRange(n, n);
+  }
+})();
+</script>
+"""
+
+
+def _maybe_focus_source_textarea() -> None:
+    if st.session_state.pop("_focus_source_textarea", False):
+        components.html(_FOCUS_SOURCE_TEXTAREA, height=0)
 
 
 def _connection_unreachable_hint(exc: BaseException) -> str | None:
@@ -72,6 +82,59 @@ def _ollama_client(host: str) -> ollama.Client:
     return ollama.Client(host=h) if h else ollama.Client()
 
 
+def _parse_installed_model_names(list_response: object) -> list[str]:
+    names: list[str] = []
+    raw: object | None = None
+    if isinstance(list_response, dict):
+        raw = list_response.get("models")
+    elif list_response is not None:
+        raw = getattr(list_response, "models", None)
+    if not raw:
+        return names
+    for item in raw:
+        if isinstance(item, dict):
+            n = item.get("model") or item.get("name") or ""
+        else:
+            n = getattr(item, "model", None) or getattr(item, "name", None) or ""
+        n = str(n).strip()
+        if n:
+            names.append(n)
+    return names
+
+
+def _model_installed(installed: list[str], requested: str) -> bool:
+    r = (requested or "").strip()
+    if not r:
+        return False
+    if r in installed:
+        return True
+    return any(
+        n == r or n.startswith(r + ":") or (":" not in r and n.split(":", 1)[0] == r)
+        for n in installed
+    )
+
+
+def check_ollama_available(host: str, model: str) -> tuple[bool, bool, str]:
+    """Return (api_reachable, model_installed, sidebar_message)."""
+    try:
+        client = _ollama_client(host)
+        resp = client.list()
+        names = _parse_installed_model_names(resp)
+    except Exception as e:  # noqa: BLE001 — health probe
+        h = (host or "").strip() or "(default)"
+        return False, False, f"Cannot reach Ollama at **{h}**: {e}"
+
+    h = (host or "").strip() or "default host"
+    if not model.strip():
+        return True, False, f"Ollama API OK (**{h}**). Enter a model name."
+    if _model_installed(names, model):
+        return True, True, f"Ollama API OK (**{h}**), model **`{model.strip()}`** is available."
+    return True, False, (
+        f"Ollama API OK (**{h}**), but model **`{model.strip()}`** was not found in "
+        f"`ollama list` ({len(names)} model(s) on server). Pull it or adjust the name."
+    )
+
+
 def translate_stream(client: ollama.Client, model: str, source_text: str):
     stream = client.chat(
         model=model,
@@ -87,7 +150,39 @@ def translate_stream(client: ollama.Client, model: str, source_text: str):
             yield content
 
 
-if st.button(LANG.translate_button, type="primary", disabled=not source.strip()):
+model = st.sidebar.text_input("Ollama model name", value=DEFAULT_MODEL, help="Must match `ollama list` on this machine.")
+default_host = os.environ.get("OLLAMA_HOST", "")
+host = st.sidebar.text_input(
+    "Ollama API URL (optional)",
+    value=default_host,
+    placeholder="http://192.168.0.111:11434",
+    help="Base URL of the Ollama API (same machine or remote). Set OLLAMA_HOST or edit here.",
+)
+
+api_ok, model_ok, health_msg = check_ollama_available(host, model)
+if api_ok and model_ok:
+    st.sidebar.success(health_msg)
+elif api_ok:
+    st.sidebar.warning(health_msg)
+else:
+    st.sidebar.error(health_msg)
+
+st.sidebar.caption(f"Language pair: **{LANG.code}** (`APP_LANGUAGE` or `--lang`)")
+
+source = st.text_area(
+    LANG.source_label,
+    height=180,
+    placeholder=LANG.source_placeholder,
+    key="source_text",
+)
+
+if st.button(
+    LANG.translate_button,
+    type="primary",
+    disabled=not source.strip() or not api_ok,
+    help=None if api_ok else "Connect to Ollama first (check API URL and server).",
+):
+    st.session_state["_focus_source_textarea"] = True
     try:
         client = _ollama_client(host)
         output_box = st.empty()
@@ -116,5 +211,7 @@ if st.button(LANG.translate_button, type="primary", disabled=not source.strip())
 if st.session_state.translation_output:
     st.subheader(LANG.translation_heading)
     st.text(st.session_state.translation_output)
+
+_maybe_focus_source_textarea()
 
 st.sidebar.markdown("---")
