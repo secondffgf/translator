@@ -59,6 +59,30 @@ def _maybe_focus_source_textarea() -> None:
         components.html(_FOCUS_SOURCE_TEXTAREA, height=0)
 
 
+def _render_special_character_buttons() -> None:
+    """Append-on-click buttons for non-ASCII letters; refocus source textarea after each click."""
+    chars = LANG.special_characters
+    if not chars:
+        return
+    st.caption(
+        "Special characters in this language — click a button to append it to the text above:"
+    )
+    cols_per_row = 10
+    for row_start in range(0, len(chars), cols_per_row):
+        chunk = chars[row_start : row_start + cols_per_row]
+        cols = st.columns(len(chunk))
+        for i, ch in enumerate(chunk):
+            idx = row_start + i
+            with cols[i]:
+                if st.button(
+                    ch,
+                    key=f"spec_char_{LANG.code}_{idx}",
+                    use_container_width=True,
+                ):
+                    st.session_state["_pending_source_append"] = ch
+                    st.rerun()
+
+
 def _connection_unreachable_hint(exc: BaseException) -> str | None:
     errno = getattr(exc, "errno", None)
     text = str(exc).lower()
@@ -169,12 +193,21 @@ else:
 
 st.sidebar.caption(f"Language pair: **{LANG.code}** (`APP_LANGUAGE` or `--lang`)")
 
+# Apply character-append from special-buttons *before* instantiating the text_area widget
+# (Streamlit forbids mutating session_state[key] after the widget with that key is created).
+_pending_char = st.session_state.pop("_pending_source_append", None)
+if _pending_char is not None:
+    st.session_state.source_text = (st.session_state.get("source_text") or "") + _pending_char
+    st.session_state["_focus_source_textarea"] = True
+
 source = st.text_area(
     LANG.source_label,
     height=180,
     placeholder=LANG.source_placeholder,
     key="source_text",
 )
+
+_render_special_character_buttons()
 
 if st.button(
     LANG.translate_button,

@@ -8,6 +8,25 @@ from languages.profile import LanguagePair
 
 CODE = "es-uk"
 
+SPECIAL_CHARACTERS = (
+    "á",
+    "é",
+    "í",
+    "ó",
+    "ú",
+    "ñ",
+    "ü",
+    "Á",
+    "É",
+    "Í",
+    "Ó",
+    "Ú",
+    "Ñ",
+    "Ü",
+    "¿",
+    "¡",
+)
+
 # Latin letters used in Spanish (no ß); includes accented vowels and ñ.
 _ES_CHAR = r"A-Za-záéíóúÁÉÍÓÚñÑüÜ"
 
@@ -61,5 +80,6 @@ PAIR = LanguagePair(
     source_placeholder="Hola, ¿cómo está usted?",
     translate_button="Translate to Ukrainian",
     translation_heading="Translation",
+    special_characters=SPECIAL_CHARACTERS,
     normalize_output=normalize_output,
 )

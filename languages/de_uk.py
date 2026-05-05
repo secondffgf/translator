@@ -8,6 +8,17 @@ from languages.profile import LanguagePair
 
 CODE = "de-uk"
 
+# Letters beyond US ASCII — for copy-paste when only an English keyboard is configured.
+SPECIAL_CHARACTERS = (
+    "ä",
+    "ö",
+    "ü",
+    "ß",
+    "Ä",
+    "Ö",
+    "Ü",
+)
+
 SYSTEM_PROMPT = """You are a professional translator.
 
 Task: Translate the user's message from German into Ukrainian.
@@ -56,5 +67,6 @@ PAIR = LanguagePair(
     source_placeholder="Guten Tag, wie geht es Ihnen?",
     translate_button="Translate to Ukrainian",
     translation_heading="Translation",
+    special_characters=SPECIAL_CHARACTERS,
     normalize_output=normalize_output,
 )

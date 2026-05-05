@@ -8,6 +8,27 @@ from languages.profile import LanguagePair
 
 CODE = "pl-uk"
 
+SPECIAL_CHARACTERS = (
+    "ą",
+    "ć",
+    "ę",
+    "ł",
+    "ń",
+    "ó",
+    "ś",
+    "ź",
+    "ż",
+    "Ą",
+    "Ć",
+    "Ę",
+    "Ł",
+    "Ń",
+    "Ó",
+    "Ś",
+    "Ź",
+    "Ż",
+)
+
 _PL_CHAR = r"A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ"
 
 SYSTEM_PROMPT = """You are a professional translator.
@@ -59,5 +80,6 @@ PAIR = LanguagePair(
     source_placeholder="Dzień dobry, jak się Pan ma?",
     translate_button="Translate to Ukrainian",
     translation_heading="Translation",
+    special_characters=SPECIAL_CHARACTERS,
     normalize_output=normalize_output,
 )

@@ -19,4 +19,5 @@ class LanguagePair:
     source_placeholder: str
     translate_button: str
     translation_heading: str
+    special_characters: tuple[str, ...]
     normalize_output: Callable[[str], str]

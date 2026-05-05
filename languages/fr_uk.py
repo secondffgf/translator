@@ -8,6 +8,45 @@ from languages.profile import LanguagePair
 
 CODE = "fr-uk"
 
+SPECIAL_CHARACTERS = (
+    "à",
+    "â",
+    "ä",
+    "ç",
+    "é",
+    "è",
+    "ê",
+    "ë",
+    "î",
+    "ï",
+    "ô",
+    "ö",
+    "ù",
+    "û",
+    "ü",
+    "ÿ",
+    "œ",
+    "æ",
+    "À",
+    "Â",
+    "Ä",
+    "Ç",
+    "É",
+    "È",
+    "Ê",
+    "Ë",
+    "Î",
+    "Ï",
+    "Ô",
+    "Ö",
+    "Ù",
+    "Û",
+    "Ü",
+    "Ÿ",
+    "Œ",
+    "Æ",
+)
+
 _FR_CHAR = r"A-Za-zÀÂÄÇÉÈÊËÎÏÔÖÙÛÜàâäçéèêëîïôöùûüÿŒœÆæ"
 
 SYSTEM_PROMPT = """You are a professional translator.
@@ -60,5 +99,6 @@ PAIR = LanguagePair(
     source_placeholder="Bonjour, comment allez-vous ?",
     translate_button="Translate to Ukrainian",
     translation_heading="Translation",
+    special_characters=SPECIAL_CHARACTERS,
     normalize_output=normalize_output,
 )
