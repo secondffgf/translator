@@ -6,7 +6,6 @@ import os
 
 import ollama
 import streamlit as st
-import streamlit.components.v1 as components
 
 from languages import load_language
 from settings import get_language_code
@@ -56,7 +55,8 @@ _FOCUS_SOURCE_TEXTAREA = """
 
 def _maybe_focus_source_textarea() -> None:
     if st.session_state.pop("_focus_source_textarea", False):
-        components.html(_FOCUS_SOURCE_TEXTAREA, height=0)
+        # st.iframe forbids height=0; use 1px so the focus script runs with negligible layout.
+        st.iframe(_FOCUS_SOURCE_TEXTAREA, height=1, tab_index=-1)
 
 
 def _render_special_character_buttons() -> None:
