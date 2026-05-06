@@ -1,10 +1,6 @@
-.PHONY: up up-de up-es up-fr up-pl down logs ollama-check
+.PHONY: up-de up-es up-fr up-pl down logs ollama-check
 
-LANG ?= de-uk
 OLLAMA_HOST ?= http://192.168.0.111:11434
-
-up:
-	APP_LANGUAGE=$(LANG) docker compose up --build
 
 up-de:
 	APP_LANGUAGE=de-uk docker compose up --build
