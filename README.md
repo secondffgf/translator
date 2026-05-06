@@ -95,6 +95,12 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
+Or use the `Makefile` shortcuts:
+
+```bash
+make up-es    # docker compose with APP_LANGUAGE=es-uk
+```
+
 Ollama’s default API (`http://127.0.0.1:11434`) is used if you leave the **Ollama API URL** field empty in the sidebar.
 
 ## Troubleshooting: `[Errno 113] No route to host`
