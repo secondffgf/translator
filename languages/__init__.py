@@ -11,6 +11,7 @@ _REGISTRY: dict[str, str] = {
     "es-uk": "languages.es_uk",
     "fr-uk": "languages.fr_uk",
     "pl-uk": "languages.pl_uk",
+    "uk-fr": "languages.uk_fr",
 }
 
 
