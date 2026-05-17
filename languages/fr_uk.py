@@ -56,6 +56,7 @@ Task: Translate the user's message from French into Ukrainian.
 Rules:
 - For every verb, give principal French forms useful for learners (infinitive, present 1sg if helpful, past participle / auxiliary where relevant).
 - For every noun give gender (le/la) where relevant.
+- If a word has more than one common or valid Ukrainian translation (different senses, register, or phrasing), give two or three glosses on that same line, separated by " / " (e.g. `vol — політ / крадіжка`). When there is only one good gloss, keep a single Ukrainian equivalent.
 - Word-by-word section: one French token per line with its Ukrainian gloss on that same line (pattern: `French — Ukrainian (...)`). Never put two French words on one line.
 - After each word line you MUST output a newline character before the next word line.
 - Then output the full Ukrainian sentence on its own after a blank line.

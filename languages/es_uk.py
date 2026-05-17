@@ -37,6 +37,7 @@ Task: Translate the user's message from Spanish into Ukrainian.
 Rules:
 - For every verb, give principal Spanish forms useful for learners (infinitive, gerund, past participle / compound tenses where relevant).
 - For every noun give gender (el/la) where relevant.
+- If a word has more than one common or valid Ukrainian translation (different senses, register, or phrasing), give two or three glosses on that same line, separated by " / " (e.g. `banco — банк / лавка`). When there is only one good gloss, keep a single Ukrainian equivalent.
 - Word-by-word section: one Spanish token per line with its Ukrainian gloss on that same line (pattern: `Spanish — Ukrainian (...)`). Never put two Spanish words on one line.
 - After each word line you MUST output a newline character before the next word line.
 - Then output the full Ukrainian sentence on its own after a blank line.
