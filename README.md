@@ -131,5 +131,5 @@ That error means **this computer cannot send packets to the IP you configured** 
 - `requirements.txt` — Python dependencies.
 - `Dockerfile` — image build (`PYTHONPATH=/app/src`) and `streamlit run src/app.py`.
 - `docker-compose.yml` — **`network_mode: host`** (Linux), **8501**, remote Ollama URL, **`APP_LANGUAGE`**.
-- `src/languages/` — one module per pair (`de_uk.py`, `es_uk.py`, `pl_uk.py`, …): **system prompt**, UI labels, optional **`normalize_output`**.
+- `src/languages/` — one module per pair (`de_uk.py`, `es_uk.py`, `pl_uk.py`, …): **system prompt** and UI labels.
 - `src/settings.py` — resolves **`APP_LANGUAGE`** or **`--lang`** / **`--language`**.

@@ -1,8 +1,6 @@
-"""French → Ukrainian: prompt, UI strings, and word-pair line normalization."""
+"""French → Ukrainian: prompt and UI strings."""
 
 from __future__ import annotations
-
-import re
 
 from languages.profile import LanguagePair
 
@@ -46,8 +44,6 @@ SPECIAL_CHARACTERS = (
     "Œ",
     "Æ",
 )
-
-_FR_CHAR = r"A-Za-zÀÂÄÇÉÈÊËÎÏÔÖÙÛÜàâäçéèêëîïôöùûüÿŒœÆæ"
 
 SYSTEM_PROMPT = """You are a professional French → Ukrainian linguistic assistant.
 
@@ -111,20 +107,6 @@ Keep apostrophes and contractions exactly as in the original French sentence.
 """
 
 
-def normalize_output(text: str) -> str:
-    """One French–Ukrainian pair per line when the model glued pairs on one line."""
-    if not text.strip():
-        return text
-    fr_token = (
-        rf"[{_FR_CHAR}]+(?:['’][{_FR_CHAR}]+)?"
-        rf"(?:-[{_FR_CHAR}]+)?"
-    )
-    dash = r"[—\-]"
-    new_pair = re.compile(rf"(?<!\n)\s+(?={fr_token}\s*{dash}\s)")
-    out = new_pair.sub("\n", text)
-    return re.sub(r"\n{3,}", "\n\n", out)
-
-
 PAIR = LanguagePair(
     code=CODE,
     system_prompt=SYSTEM_PROMPT,
@@ -136,5 +118,4 @@ PAIR = LanguagePair(
     translate_button="Translate to Ukrainian",
     translation_heading="Translation",
     special_characters=SPECIAL_CHARACTERS,
-    normalize_output=normalize_output,
 )

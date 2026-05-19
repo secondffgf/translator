@@ -1,8 +1,6 @@
-"""German → Ukrainian: prompt, UI strings, and word-pair line normalization."""
+"""German → Ukrainian: prompt and UI strings."""
 
 from __future__ import annotations
-
-import re
 
 from languages.profile import LanguagePair
 
@@ -109,17 +107,6 @@ If a word is part of a fixed expression, still provide a separate translation li
 """
 
 
-def normalize_output(text: str) -> str:
-    """One German–Ukrainian pair per line when the model glued pairs on one line."""
-    if not text.strip():
-        return text
-    german_token = r"[A-Za-zäöüÄÖÜß]+(?:-[A-Za-zäöüÄÖÜß]+)?"
-    dash = r"[—\-]"
-    new_pair = re.compile(rf"(?<!\n)\s+(?={german_token}\s*{dash}\s)")
-    out = new_pair.sub("\n", text)
-    return re.sub(r"\n{3,}", "\n\n", out)
-
-
 PAIR = LanguagePair(
     code=CODE,
     system_prompt=SYSTEM_PROMPT,
@@ -131,5 +118,4 @@ PAIR = LanguagePair(
     translate_button="Translate to Ukrainian",
     translation_heading="Translation",
     special_characters=SPECIAL_CHARACTERS,
-    normalize_output=normalize_output,
 )

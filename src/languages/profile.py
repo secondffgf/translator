@@ -1,9 +1,8 @@
-"""Language pair configuration (prompt + UI + optional post-processing)."""
+"""Language pair configuration (prompt + UI)."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable
 
 
 @dataclass(frozen=True)
@@ -20,4 +19,3 @@ class LanguagePair:
     translate_button: str
     translation_heading: str
     special_characters: tuple[str, ...]
-    normalize_output: Callable[[str], str]

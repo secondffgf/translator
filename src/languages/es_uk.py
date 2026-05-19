@@ -1,8 +1,6 @@
-"""Spanish → Ukrainian: prompt, UI strings, and word-pair line normalization."""
+"""Spanish → Ukrainian: prompt and UI strings."""
 
 from __future__ import annotations
-
-import re
 
 from languages.profile import LanguagePair
 
@@ -26,9 +24,6 @@ SPECIAL_CHARACTERS = (
     "¿",
     "¡",
 )
-
-# Latin letters used in Spanish (no ß); includes accented vowels and ñ.
-_ES_CHAR = r"A-Za-záéíóúÁÉÍÓÚñÑüÜ"
 
 SYSTEM_PROMPT = """You are a professional translator.
 
@@ -57,20 +52,6 @@ Full sentence: Я прочитав цю книгу.
 """
 
 
-def normalize_output(text: str) -> str:
-    """One Spanish–Ukrainian pair per line when the model glued pairs on one line."""
-    if not text.strip():
-        return text
-    es_token = (
-        rf"[{_ES_CHAR}]+(?:['’][{_ES_CHAR}]+)?"
-        rf"(?:-[{_ES_CHAR}]+)?"
-    )
-    dash = r"[—\-]"
-    new_pair = re.compile(rf"(?<!\n)\s+(?={es_token}\s*{dash}\s)")
-    out = new_pair.sub("\n", text)
-    return re.sub(r"\n{3,}", "\n\n", out)
-
-
 PAIR = LanguagePair(
     code=CODE,
     system_prompt=SYSTEM_PROMPT,
@@ -82,5 +63,4 @@ PAIR = LanguagePair(
     translate_button="Translate to Ukrainian",
     translation_heading="Translation",
     special_characters=SPECIAL_CHARACTERS,
-    normalize_output=normalize_output,
 )
