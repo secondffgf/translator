@@ -27,6 +27,8 @@ if "source_text" not in st.session_state:
     st.session_state.source_text = ""
 if "translation_output" not in st.session_state:
     st.session_state.translation_output = None
+if "translation_token_usage" not in st.session_state:
+    st.session_state.translation_token_usage = None
 
 if st.session_state.pop("_clear_source_after_translate", False):
     st.session_state.source_text = ""
@@ -126,6 +128,25 @@ def _parse_installed_model_names(list_response: object) -> list[str]:
     return names
 
 
+def _chunk_field(chunk: object, key: str, default: object = None) -> object:
+    if isinstance(chunk, dict):
+        return chunk.get(key, default)
+    return getattr(chunk, key, default)
+
+
+def _format_token_usage(usage: dict[str, int] | None) -> str | None:
+    if not usage:
+        return None
+    prompt = usage.get("prompt", 0)
+    completion = usage.get("completion", 0)
+    if prompt == 0 and completion == 0:
+        return None
+    return (
+        f"Tokens consumed: **{prompt}** prompt + **{completion}** generated "
+        f"= **{prompt + completion}** total"
+    )
+
+
 def _model_installed(installed: list[str], requested: str) -> bool:
     r = (requested or "").strip()
     if not r:
@@ -159,7 +180,12 @@ def check_ollama_available(host: str, model: str) -> tuple[bool, bool, str]:
     )
 
 
-def translate_stream(client: ollama.Client, model: str, source_text: str):
+def translate_stream(
+    client: ollama.Client,
+    model: str,
+    source_text: str,
+    usage: dict[str, int] | None = None,
+):
     stream = client.chat(
         model=model,
         messages=[
@@ -169,7 +195,15 @@ def translate_stream(client: ollama.Client, model: str, source_text: str):
         stream=True,
     )
     for chunk in stream:
-        content = chunk.get("message", {}).get("content")
+        if usage is not None and _chunk_field(chunk, "done"):
+            usage["prompt"] = int(_chunk_field(chunk, "prompt_eval_count") or 0)
+            usage["completion"] = int(_chunk_field(chunk, "eval_count") or 0)
+        message = _chunk_field(chunk, "message") or {}
+        content = (
+            message.get("content")
+            if isinstance(message, dict)
+            else getattr(message, "content", None)
+        )
         if content:
             yield content
 
@@ -221,11 +255,13 @@ if st.button(
         output_box = st.empty()
         buffer = ""
         norm = LANG.normalize_output
-        for chunk in translate_stream(client, model, source.strip()):
+        usage: dict[str, int] = {}
+        for chunk in translate_stream(client, model, source.strip(), usage=usage):
             buffer += chunk
             output_box.text(norm(buffer))
         if buffer.strip():
             st.session_state.translation_output = norm(buffer)
+            st.session_state.translation_token_usage = usage if usage else None
             st.session_state["_clear_source_after_translate"] = True
             st.rerun()
         else:
@@ -244,6 +280,9 @@ if st.button(
 if st.session_state.translation_output:
     st.subheader(LANG.translation_heading)
     st.text(st.session_state.translation_output)
+    token_line = _format_token_usage(st.session_state.translation_token_usage)
+    if token_line:
+        st.caption(token_line)
 
 _maybe_focus_source_textarea()
 
