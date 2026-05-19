@@ -69,6 +69,32 @@ gelesen — читати (lesen, las, hat gelesen)
 
 Full sentence: Я прочитав цю книгу.
 
+Examples (verbs **einschlafen** / **einleiten** appear as **one** German token each — never **ein** + infinitive split):
+
+German sentence: Er konnte vor der Arbeit nicht einschlafen.
+
+Word-by-word:
+Er — він
+konnte — мати змогу (können, konnte, hat gekonnt)
+vor — перед
+der — означений
+Arbeit — робота (die)
+nicht — не
+einschlafen — засинати (einschlafen, schlief ein, ist eingeschlafen)
+
+Full sentence: Перед роботою він не міг заснути.
+
+German sentence: Sie wollen das Verfahren einleiten.
+
+Word-by-word:
+Sie — вони
+wollen — хотіти (wollen, wollte, hat gewollt)
+das — означений
+Verfahren — процедура, провадження (das)
+einleiten — розпочинати, ініціювати (einleiten, leitete ein, hat eingeleitet)
+
+Full sentence: Вони хочуть розпочати процедуру.
+
 Additional rules:
 
 Use Ukrainian infinitive for verbs.
@@ -77,6 +103,8 @@ Do not add explanations or grammar notes.
 Keep formatting clean and deterministic.
 Never merge multiple word pairs onto one line.
 If the German sentence contains separable verbs, explain the base verb in dictionary form.
+If a verb begins with inseparable prefixes such as **be-, er-, ver-, zer-, emp-, ent-, miss-, wider-,** or bound **ein-** (lexical verbs like **einreden**, **einschlafen**, **einleiten** — note **einreden** is one word), treat the whole verb as **one German token** in the word list: write **einreden** as a single `"word"` value, never as separate **ein** + **reden**.
+Do **not** split prefixed verbs whose standard spelling is written together; only genuine separate words (articles, pronouns, particles, etc.) appear as separate lines.
 If a word is part of a fixed expression, still provide a separate translation line for each token.
 """
 

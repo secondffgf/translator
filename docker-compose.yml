@@ -5,7 +5,7 @@
 # it reaches LAN IPs (e.g. 192.168.0.111) the same way as `curl` on the host. The default Docker
 # bridge often breaks this (errno 113) when VPNs or split routing only apply to the host.
 # Note: `ports:` is ignored with host networking; Streamlit listens on 8501 on the host.
-# Docker Desktop on Mac/Windows may not support host mode fully — run `streamlit run app.py`
+# Docker Desktop on Mac/Windows may not support host mode fully — run `PYTHONPATH=src streamlit run src/app.py`
 # on the host if the container still cannot reach Ollama.
 
 services:
@@ -17,5 +17,5 @@ services:
       OLLAMA_MODEL: translategemma:12b
       # Language pair: set when running Compose, e.g. APP_LANGUAGE=es-uk docker compose up
       # Or add APP_LANGUAGE=... to a `.env` file in this directory (Compose loads it).
-      # Codes: de-uk | es-uk | fr-uk | pl-uk | uk-fr — see languages/
+      # Codes: de-uk | es-uk | fr-uk | pl-uk | uk-fr — see src/languages/
       APP_LANGUAGE: ${APP_LANGUAGE:-de-uk}
