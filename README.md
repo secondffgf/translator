@@ -1,6 +1,6 @@
 # translategemma
 
-Small **Streamlit** app that takes **German** text and translates it to **Ukrainian** using a local **[Ollama](https://ollama.com/)** model (default name: `translategemma`).
+Small **Streamlit** app that takes **German** text and translates it to **Ukrainian** using a local **[Ollama](https://ollama.com/)** model (default name: `translategemma:27b`).
 
 ## Prerequisites
 
@@ -43,7 +43,7 @@ Open **http://localhost:8501**.
 Ollama is expected on **another machine**. Compose defaults:
 
 - `OLLAMA_HOST=http://192.168.0.111:11434` (edit `docker-compose.yml` if your Ollama host differs)
-- `OLLAMA_MODEL=translategemma:12b`
+- `OLLAMA_MODEL=translategemma:27b`
 - `APP_LANGUAGE` — **`${APP_LANGUAGE:-de-uk}`** in Compose; override as above
 - **`network_mode: host`** (Linux) so the container uses the **same routing as your PC** and can reach `192.168.*` addresses. Without this, Docker’s bridge network sometimes cannot reach the LAN even when `curl` on the host works (VPN / split routing → errno 113).
 
@@ -65,7 +65,7 @@ export OLLAMA_HOST="0.0.0.0:11434"
 
 3. run translate llm
 ```bash
- ollama run translategemma:12b
+ ollama run translategemma:27b
 ```
 
 Also open **TCP port 11434** (or your port) in that machine’s firewall so this PC can reach it.
@@ -80,7 +80,7 @@ Use **host networking** so outbound routes match the host (needed for LAN IPs wi
 docker build -t translategemma-ui .
 docker run --rm --network host \
   -e OLLAMA_HOST=http://192.168.0.111:11434 \
-  -e OLLAMA_MODEL=translategemma:12b \
+  -e OLLAMA_MODEL=translategemma:27b \
   translategemma-ui
 ```
 
@@ -120,9 +120,26 @@ That error means **this computer cannot send packets to the IP you configured** 
 
 | Variable / UI field | Meaning |
 | --- | --- |
-| `OLLAMA_MODEL` | Default model name in the sidebar (default: `translategemma`). |
+| `OLLAMA_MODEL` | Default model name in the sidebar (default: `translategemma:27b`). |
 | `OLLAMA_HOST` | Full base URL for the Ollama API (e.g. `http://192.168.0.111:11434`). Also editable in the sidebar. |
 | `APP_LANGUAGE` | Language pair code: `de-uk`, `es-uk`, `fr-uk`, `pl-uk`, … (must exist in `src/languages/__init__.py`). |
+
+### Which Ollama model is used?
+
+On startup the sidebar health check calls Ollama’s **list models** API (`client.list()` in `src/util.py` — same idea as `ollama list`). That call:
+
+- **Does not** detect which model is “running” or loaded in memory right now.
+- **Does** return every model **installed** on that Ollama host.
+
+The app only uses that list to verify that the name in **Ollama model name** (or `OLLAMA_MODEL`) appears among installed models. It does **not** pick a model for you when several are installed.
+
+**Which model actually runs a translation:** only the name passed to **`/api/chat`** when you click Translate — the sidebar field / `OLLAMA_MODEL` (default `translategemma:27b`). Ollama loads that model for the request. To use another installed model, change the sidebar name (it must match `ollama list` exactly, including the tag).
+
+| Question | Answer |
+| --- | --- |
+| Does `list()` choose a model? | No — it only lists what is installed. |
+| Which model runs? | Only the name in the sidebar / `OLLAMA_MODEL` on each translate. |
+| Several models installed? | All stay available on the server; the app uses one at a time, whichever you configure. |
 
 ## Project layout
 

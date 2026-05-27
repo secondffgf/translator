@@ -14,7 +14,7 @@ services:
     network_mode: host
     environment:
       OLLAMA_HOST: http://192.168.0.111:11434
-      OLLAMA_MODEL: translategemma:12b
+      OLLAMA_MODEL: translategemma:27b
       # Language pair: set when running Compose, e.g. APP_LANGUAGE=es-uk docker compose up
       # Or add APP_LANGUAGE=... to a `.env` file in this directory (Compose loads it).
       # Codes: de-uk | es-uk | fr-uk | pl-uk | uk-fr — see src/languages/
