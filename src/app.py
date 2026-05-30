@@ -24,7 +24,8 @@ from util import (
     render_special_character_buttons,
 )
 
-DEFAULT_MODEL = os.environ.get("OLLAMA_MODEL", "translategemma")
+DEFAULT_MODEL = os.environ.get("OLLAMA_MODEL", "translategemma:27b")
+OLLAMA_HOST = (os.environ.get("OLLAMA_HOST") or "").strip()
 
 try:
     LANG = load_language(get_language_code())
@@ -47,14 +48,8 @@ if "translation_elapsed_seconds" not in st.session_state:
 if st.session_state.pop("_clear_source_after_translate", False):
     st.session_state.source_text = ""
 
-model = st.sidebar.text_input("Ollama model name", value=DEFAULT_MODEL, help="Must match `ollama list` on this machine.")
-default_host = os.environ.get("OLLAMA_HOST", "")
-host = st.sidebar.text_input(
-    "Ollama API URL (optional)",
-    value=default_host,
-    placeholder="http://192.168.0.111:11434",
-    help="Base URL of the Ollama API (same machine or remote). Set OLLAMA_HOST or edit here.",
-)
+model = DEFAULT_MODEL
+host = OLLAMA_HOST
 
 api_ok, model_ok, health_msg = check_ollama_available(host, model)
 if api_ok and model_ok:
@@ -65,6 +60,7 @@ else:
     st.sidebar.error(health_msg)
 
 st.sidebar.caption(f"Language pair: **{LANG.code}** (`APP_LANGUAGE` or `--lang`)")
+render_special_character_buttons(LANG)
 
 # Apply character-append from special-buttons *before* instantiating the text_area widget
 # (Streamlit forbids mutating session_state[key] after the widget with that key is created).
@@ -80,13 +76,11 @@ source = st.text_area(
     key="source_text",
 )
 
-render_special_character_buttons(LANG)
-
 if st.button(
     LANG.translate_button,
     type="primary",
     disabled=not source.strip() or not api_ok,
-    help=None if api_ok else "Connect to Ollama first (check API URL and server).",
+    help=None if api_ok else "Connect to Ollama first (set OLLAMA_HOST / OLLAMA_MODEL and restart).",
 ):
     st.session_state["_focus_source_textarea"] = True
     st.session_state["_translation_started_at"] = time.perf_counter()

@@ -40,21 +40,32 @@ def maybe_focus_source_textarea() -> None:
         st.iframe(FOCUS_SOURCE_TEXTAREA_SCRIPT, height=1, tab_index=-1)
 
 
+SPECIAL_CHAR_BUTTON_CSS = """
+<style>
+section[data-testid="stSidebar"] .tg-spec-char-host ~ div[data-testid="stHorizontalBlock"] button {
+    width: 100%;
+}
+</style>
+<div class="tg-spec-char-host" aria-hidden="true"></div>
+"""
+
+COLS_PER_ROW = 5
+
+
 def render_special_character_buttons(lang: LanguagePair) -> None:
     """Append-on-click buttons for non-ASCII letters; refocus source textarea after each click."""
     chars = lang.special_characters
     if not chars:
         return
-    st.caption(
-        "Special characters in this language — click a button to append it to the text above:"
-    )
-    cols_per_row = 10
-    for row_start in range(0, len(chars), cols_per_row):
-        chunk = chars[row_start : row_start + cols_per_row]
-        cols = st.columns(len(chunk))
-        for i, ch in enumerate(chunk):
-            idx = row_start + i
-            with cols[i]:
+    st.sidebar.markdown("---")
+    st.sidebar.markdown(SPECIAL_CHAR_BUTTON_CSS, unsafe_allow_html=True)
+    st.sidebar.caption("Special characters — click to append to the source text:")
+    for row_start in range(0, len(chars), COLS_PER_ROW):
+        chunk = chars[row_start : row_start + COLS_PER_ROW]
+        cols = st.sidebar.columns(COLS_PER_ROW)
+        for col_idx, ch in enumerate(chunk):
+            idx = row_start + col_idx
+            with cols[col_idx]:
                 if st.button(
                     ch,
                     key=f"spec_char_{lang.code}_{idx}",

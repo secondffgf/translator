@@ -103,13 +103,13 @@ Or use the `Makefile` shortcuts:
 make up-es    # docker compose with APP_LANGUAGE=es-uk
 ```
 
-Ollama’s default API (`http://127.0.0.1:11434`) is used if you leave the **Ollama API URL** field empty in the sidebar.
+Ollama’s default API (`http://127.0.0.1:11434`) is used when **`OLLAMA_HOST`** is unset.
 
 ## Troubleshooting: `[Errno 113] No route to host`
 
 That error means **this computer cannot send packets to the IP you configured** (routing / wrong address / blocked path), not “Ollama returned HTTP 500”.
 
-1. **Confirm the IP** — Typing **`192.186`** instead of **`192.168`** is a common mistake. On the Ollama PC run `ip a` / `ifconfig` (or check the router’s DHCP list) and set `OLLAMA_HOST` / the sidebar URL to that address, e.g. `http://192.168.0.111:11434`.
+1. **Confirm the IP** — Typing **`192.186`** instead of **`192.168`** is a common mistake. On the Ollama PC run `ip a` / `ifconfig` (or check the router’s DHCP list) and set **`OLLAMA_HOST`** to that address, e.g. `http://192.168.0.111:11434`.
 2. **Reachability** — From the machine running Streamlit (or from inside the container host), run:  
    `curl -sS --connect-timeout 3 http://<ollama-ip>:11434/api/tags`  
    If that fails, fix the network before the app will work.
@@ -122,8 +122,8 @@ That error means **this computer cannot send packets to the IP you configured** 
 
 | Variable / UI field | Meaning |
 | --- | --- |
-| `OLLAMA_MODEL` | Default model name in the sidebar (default: `translategemma:27b`). |
-| `OLLAMA_HOST` | Full base URL for the Ollama API (e.g. `http://192.168.0.111:11434`). Also editable in the sidebar. |
+| `OLLAMA_MODEL` | Model name for every translate request (default: `translategemma:27b`). Set before startup; not editable in the UI. |
+| `OLLAMA_HOST` | Full base URL for the Ollama API (e.g. `http://192.168.0.111:11434`). Unset = Ollama client default (`127.0.0.1:11434`). |
 | `OLLAMA_NUM_CTX` | Context window in tokens passed as `options.num_ctx` on each translate (default: `65536` / 64k). |
 | `APP_LANGUAGE` | Language pair code: `de-uk`, `es-uk`, `fr-uk`, `pl-uk`, … (must exist in `src/languages/__init__.py`). |
 
@@ -134,14 +134,14 @@ On startup the sidebar health check calls Ollama’s **list models** API (`clien
 - **Does not** detect which model is “running” or loaded in memory right now.
 - **Does** return every model **installed** on that Ollama host.
 
-The app only uses that list to verify that the name in **Ollama model name** (or `OLLAMA_MODEL`) appears among installed models. It does **not** pick a model for you when several are installed.
+The app only uses that list to verify that **`OLLAMA_MODEL`** appears among installed models. It does **not** pick a model for you when several are installed.
 
-**Which model actually runs a translation:** only the name passed to **`/api/chat`** when you click Translate — the sidebar field / `OLLAMA_MODEL` (default `translategemma:27b`). Ollama loads that model for the request. To use another installed model, change the sidebar name (it must match `ollama list` exactly, including the tag).
+**Which model actually runs a translation:** only **`OLLAMA_MODEL`** (default `translategemma:27b`) on each **`/api/chat`** call when you click Translate. To use another installed model, change the env var and restart the app (name must match `ollama list` exactly, including the tag).
 
 | Question | Answer |
 | --- | --- |
 | Does `list()` choose a model? | No — it only lists what is installed. |
-| Which model runs? | Only the name in the sidebar / `OLLAMA_MODEL` on each translate. |
+| Which model runs? | Only **`OLLAMA_MODEL`** on each translate (restart after changing). |
 | Several models installed? | All stay available on the server; the app uses one at a time, whichever you configure. |
 
 ## Project layout
