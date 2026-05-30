@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 import ollama
 import streamlit as st
 
@@ -123,6 +125,16 @@ def format_token_usage(resp: TranslationLLMResponse | None) -> str | None:
     )
 
 
+def format_elapsed_seconds(seconds: float | None) -> str | None:
+    if seconds is None or seconds < 0:
+        return None
+    if seconds >= 60:
+        minutes = int(seconds // 60)
+        remainder = seconds % 60
+        return f"Time taken: **{minutes}m {remainder:.1f}s**"
+    return f"Time taken: **{seconds:.1f} s**"
+
+
 def model_installed(installed: list[str], requested: str) -> bool:
     r = (requested or "").strip()
     if not r:
@@ -156,6 +168,15 @@ def check_ollama_available(host: str, model: str) -> tuple[bool, bool, str]:
     )
 
 
+def ollama_num_ctx() -> int:
+    """Context window for ``client.chat`` (``options.num_ctx``); default 64k tokens."""
+    raw = (os.environ.get("OLLAMA_NUM_CTX") or "65536").strip()
+    try:
+        return int(raw)
+    except ValueError:
+        return 65536
+
+
 def fetch_translation_completion(
     client: ollama.Client,
     model: str,
@@ -173,6 +194,7 @@ def fetch_translation_completion(
         ],
         stream=False,
         format=translation_llm_json_schema(),
+        options={"num_ctx": ollama_num_ctx()},
     )
     message = completion_field(resp, "message") or {}
     raw_content = (

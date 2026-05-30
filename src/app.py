@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import time
 
 import ollama
 import streamlit as st
@@ -16,6 +17,7 @@ from util import (
     completion_field,
     connection_unreachable_hint,
     fetch_translation_completion,
+    format_elapsed_seconds,
     format_token_usage,
     maybe_focus_source_textarea,
     ollama_client,
@@ -39,6 +41,8 @@ if "source_text" not in st.session_state:
     st.session_state.source_text = ""
 if "translation_response" not in st.session_state:
     st.session_state.translation_response = None
+if "translation_elapsed_seconds" not in st.session_state:
+    st.session_state.translation_elapsed_seconds = None
 
 if st.session_state.pop("_clear_source_after_translate", False):
     st.session_state.source_text = ""
@@ -85,6 +89,7 @@ if st.button(
     help=None if api_ok else "Connect to Ollama first (check API URL and server).",
 ):
     st.session_state["_focus_source_textarea"] = True
+    st.session_state["_translation_started_at"] = time.perf_counter()
     raw_content = ""
     try:
         client = ollama_client(host)
@@ -96,6 +101,7 @@ if st.button(
                 system_prompt=LANG.system_prompt,
             )
         if not raw_content:
+            st.session_state.pop("_translation_started_at", None)
             st.warning("Model returned no text. Check the model name and that Ollama is running.")
         else:
             payload = parse_translation_json(raw_content)
@@ -109,15 +115,19 @@ if st.button(
             st.session_state["_clear_source_after_translate"] = True
             st.rerun()
     except ValidationError as e:
+        st.session_state.pop("_translation_started_at", None)
         st.error(f"Model output did not match the expected JSON shape: {e}")
         if raw_content.strip():
             with st.expander("Raw model output"):
                 st.code(raw_content)
     except ollama.ResponseError as e:
+        st.session_state.pop("_translation_started_at", None)
         st.error(f"Ollama error: {e}")
     except ConnectionError as e:
+        st.session_state.pop("_translation_started_at", None)
         st.error(f"Cannot reach Ollama: {e}. Is the server running?")
     except Exception as e:  # noqa: BLE001 — show user-facing errors in UI
+        st.session_state.pop("_translation_started_at", None)
         hint = connection_unreachable_hint(e)
         if hint:
             st.error(f"{e}\n\n{hint}")
@@ -125,6 +135,9 @@ if st.button(
             st.error(str(e))
 
 if st.session_state.translation_response:
+    started_at = st.session_state.pop("_translation_started_at", None)
+    if started_at is not None:
+        st.session_state.translation_elapsed_seconds = time.perf_counter() - started_at
     tr = st.session_state.translation_response
     st.subheader(LANG.translation_heading)
     st.markdown(f"**Original phrase:** {tr.original_phrase}")
@@ -138,6 +151,9 @@ if st.session_state.translation_response:
     token_line = format_token_usage(tr)
     if token_line:
         st.caption(token_line)
+    elapsed_line = format_elapsed_seconds(st.session_state.translation_elapsed_seconds)
+    if elapsed_line:
+        st.caption(elapsed_line)
 
 maybe_focus_source_textarea()
 
