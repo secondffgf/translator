@@ -14,51 +14,15 @@ from llm_response import (
     translation_llm_json_schema,
 )
 
-FOCUS_SOURCE_TEXTAREA_SCRIPT = """
-<script>
-(function () {
-  const doc = window.parent.document;
-  let ta = doc.querySelector("section.main textarea");
-  if (!ta) {
-    ta = doc.querySelector('[data-testid="stAppViewContainer"] textarea');
-  }
-  if (!ta) {
-    ta = doc.querySelector("textarea");
-  }
-  if (ta) {
-    ta.focus();
-    const n = ta.value.length;
-    ta.setSelectionRange(n, n);
-  }
-})();
-</script>
-"""
-
-
-def maybe_focus_source_textarea() -> None:
-    if st.session_state.pop("_focus_source_textarea", False):
-        st.iframe(FOCUS_SOURCE_TEXTAREA_SCRIPT, height=1, tab_index=-1)
-
-
-SPECIAL_CHAR_BUTTON_CSS = """
-<style>
-section[data-testid="stSidebar"] .tg-spec-char-host ~ div[data-testid="stHorizontalBlock"] button {
-    width: 100%;
-}
-</style>
-<div class="tg-spec-char-host" aria-hidden="true"></div>
-"""
-
 COLS_PER_ROW = 5
 
 
 def render_special_character_buttons(lang: LanguagePair) -> None:
-    """Append-on-click buttons for non-ASCII letters; refocus source textarea after each click."""
+    """Sidebar grid of chars; appends via ``_pending_source_append`` on the next rerun."""
     chars = lang.special_characters
     if not chars:
         return
     st.sidebar.markdown("---")
-    st.sidebar.markdown(SPECIAL_CHAR_BUTTON_CSS, unsafe_allow_html=True)
     st.sidebar.caption("Special characters — click to append to the source text:")
     for row_start in range(0, len(chars), COLS_PER_ROW):
         chunk = chars[row_start : row_start + COLS_PER_ROW]
@@ -72,7 +36,6 @@ def render_special_character_buttons(lang: LanguagePair) -> None:
                     use_container_width=True,
                 ):
                     st.session_state["_pending_source_append"] = ch
-                    st.rerun()
 
 
 def connection_unreachable_hint(exc: BaseException) -> str | None:

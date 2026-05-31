@@ -19,7 +19,6 @@ from util import (
     fetch_translation_completion,
     format_elapsed_seconds,
     format_token_usage,
-    maybe_focus_source_textarea,
     ollama_client,
     render_special_character_buttons,
 )
@@ -62,12 +61,10 @@ else:
 st.sidebar.caption(f"Language pair: **{LANG.code}** (`APP_LANGUAGE` or `--lang`)")
 render_special_character_buttons(LANG)
 
-# Apply character-append from special-buttons *before* instantiating the text_area widget
-# (Streamlit forbids mutating session_state[key] after the widget with that key is created).
+# Apply character append before the text_area widget (Streamlit syncs widget state at rerun start).
 _pending_char = st.session_state.pop("_pending_source_append", None)
 if _pending_char is not None:
     st.session_state.source_text = (st.session_state.get("source_text") or "") + _pending_char
-    st.session_state["_focus_source_textarea"] = True
 
 source = st.text_area(
     LANG.source_label,
@@ -82,7 +79,6 @@ if st.button(
     disabled=not source.strip() or not api_ok,
     help=None if api_ok else "Connect to Ollama first (set OLLAMA_HOST / OLLAMA_MODEL and restart).",
 ):
-    st.session_state["_focus_source_textarea"] = True
     st.session_state["_translation_started_at"] = time.perf_counter()
     raw_content = ""
     try:
@@ -148,7 +144,5 @@ if st.session_state.translation_response:
     elapsed_line = format_elapsed_seconds(st.session_state.translation_elapsed_seconds)
     if elapsed_line:
         st.caption(elapsed_line)
-
-maybe_focus_source_textarea()
 
 st.sidebar.markdown("---")
