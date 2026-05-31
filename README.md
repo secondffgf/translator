@@ -44,7 +44,7 @@ Ollama is expected on **another machine**. Compose defaults:
 
 - `OLLAMA_HOST=http://192.168.0.111:11434` (edit `docker-compose.yml` if your Ollama host differs)
 - `OLLAMA_MODEL=translategemma:27b`
-- `OLLAMA_NUM_CTX=65536` (64k token context window for each chat request)
+- `OLLAMA_NUM_CTX=32768` (32k token context window for each chat request)
 - `APP_LANGUAGE` — **`${APP_LANGUAGE:-de-uk}`** in Compose; override as above
 - **`network_mode: host`** (Linux) so the container uses the **same routing as your PC** and can reach `192.168.*` addresses. Without this, Docker’s bridge network sometimes cannot reach the LAN even when `curl` on the host works (VPN / split routing → errno 113).
 
@@ -82,7 +82,7 @@ docker build -t translategemma-ui .
 docker run --rm --network host \
   -e OLLAMA_HOST=http://192.168.0.111:11434 \
   -e OLLAMA_MODEL=translategemma:27b \
-  -e OLLAMA_NUM_CTX=65536 \
+  -e OLLAMA_NUM_CTX=32768 \
   translategemma-ui
 ```
 
@@ -124,7 +124,7 @@ That error means **this computer cannot send packets to the IP you configured** 
 | --- | --- |
 | `OLLAMA_MODEL` | Model name for every translate request (default: `translategemma:27b`). Set before startup; not editable in the UI. |
 | `OLLAMA_HOST` | Full base URL for the Ollama API (e.g. `http://192.168.0.111:11434`). Unset = Ollama client default (`127.0.0.1:11434`). |
-| `OLLAMA_NUM_CTX` | Context window in tokens passed as `options.num_ctx` on each translate (default: `65536` / 64k). |
+| `OLLAMA_NUM_CTX` | Context window in tokens passed as `options.num_ctx` on each translate (default: `32768` / 32k). |
 | `APP_LANGUAGE` | Language pair code: `de-uk`, `es-uk`, `fr-uk`, `pl-uk`, … (must exist in `src/languages/__init__.py`). |
 
 ### Which Ollama model is used?

@@ -180,12 +180,12 @@ def check_ollama_available(host: str, model: str) -> tuple[bool, bool, str]:
 
 
 def ollama_num_ctx() -> int:
-    """Context window for ``client.chat`` (``options.num_ctx``); default 64k tokens."""
-    raw = (os.environ.get("OLLAMA_NUM_CTX") or "65536").strip()
+    """Context window for ``client.chat`` (``options.num_ctx``); default 32k tokens."""
+    raw = (os.environ.get("OLLAMA_NUM_CTX") or "32768").strip()
     try:
         return int(raw)
     except ValueError:
-        return 65536
+        return 32768
 
 
 def fetch_translation_completion(
