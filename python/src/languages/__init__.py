@@ -19,6 +19,11 @@ def list_language_codes() -> list[str]:
     return sorted(_REGISTRY.keys())
 
 
+def language_labels() -> dict[str, str]:
+    """Map pair code → short UI label (``LanguagePair.heading``)."""
+    return {code: load_language(code).heading for code in list_language_codes()}
+
+
 def load_language(code: str) -> LanguagePair:
     key = (code or "").strip().lower()
     if key not in _REGISTRY:

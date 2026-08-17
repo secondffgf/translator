@@ -17,6 +17,62 @@ from llm_response import (
 COLS_PER_ROW = 5
 
 
+def handle_source_textarea_focus() -> None:
+    """Focus the source ``text_area`` via inline JS (no iframe)."""
+    focus_now = st.session_state.pop("_focus_source_textarea", False)
+    st.session_state["_source_focus_run"] = st.session_state.get("_source_focus_run", 0) + 1
+    run_id = st.session_state["_source_focus_run"]
+    focus_now_js = "true" if focus_now else "false"
+
+    st.html(
+        f"""
+        <div style="display:none;height:0;overflow:hidden" aria-hidden="true">
+          <div id="tg-focus-run-{run_id}"></div>
+          <script>
+          (function () {{
+            var focusNow = {focus_now_js};
+
+            function findSourceTextarea() {{
+              return document.querySelector(".st-key-source_text textarea")
+                || document.querySelector('textarea[data-testid="stTextArea"]')
+                || document.querySelector("section.main textarea")
+                || document.querySelector("textarea");
+            }}
+
+            function focusSourceTextarea() {{
+              var ta = findSourceTextarea();
+              if (!ta) {{
+                return false;
+              }}
+              ta.focus();
+              var end = ta.value.length;
+              ta.setSelectionRange(end, end);
+              return true;
+            }}
+
+            function retryFocus(attemptsLeft) {{
+              if (focusSourceTextarea() || attemptsLeft <= 0) {{
+                return;
+              }}
+              setTimeout(function () {{
+                retryFocus(attemptsLeft - 1);
+              }}, 50);
+            }}
+
+            var nav = performance.getEntriesByType("navigation")[0];
+            var isReload = nav && nav.type === "reload";
+
+            if (focusNow || isReload) {{
+              retryFocus(40);
+            }}
+          }})();
+          </script>
+        </div>
+        """,
+        unsafe_allow_javascript=True,
+    )
+
+
 def render_special_character_buttons(lang: LanguagePair) -> None:
     """Sidebar grid of chars; appends via ``_pending_source_append`` on the next rerun."""
     chars = lang.special_characters

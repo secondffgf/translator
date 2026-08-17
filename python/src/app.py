@@ -1,4 +1,4 @@
-"""Streamlit UI: translate via local Ollama; language pair from ``APP_LANGUAGE`` or ``--lang``."""
+"""Streamlit UI: translate via local Ollama; language pair selectable in the sidebar."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import ollama
 import streamlit as st
 from pydantic import ValidationError
 
-from languages import load_language
+from languages import language_labels, list_language_codes, load_language
 from llm_response import parse_translation_json, with_token_usage
 from settings import get_language_code
 from util import (
@@ -19,6 +19,7 @@ from util import (
     fetch_translation_completion,
     format_elapsed_seconds,
     format_token_usage,
+    handle_source_textarea_focus,
     ollama_client,
     render_special_character_buttons,
 )
@@ -26,16 +27,20 @@ from util import (
 DEFAULT_MODEL = os.environ.get("OLLAMA_MODEL", "translategemma:27b")
 OLLAMA_HOST = (os.environ.get("OLLAMA_HOST") or "").strip()
 
-try:
-    LANG = load_language(get_language_code())
-except ValueError as e:
-    st.set_page_config(page_title="translategemma", layout="centered")
-    st.error(str(e))
-    st.stop()
+st.set_page_config(page_title="translategemma", page_icon="🌐", layout="centered")
 
-st.set_page_config(page_title=LANG.page_title, page_icon="🌐", layout="centered")
-st.title(LANG.heading)
-st.caption(LANG.caption)
+LANGUAGE_CODES = list_language_codes()
+LANGUAGE_LABELS = language_labels()
+
+if "language_code" not in st.session_state:
+    initial = get_language_code()
+    if initial not in LANGUAGE_CODES:
+        st.error(
+            f"Unknown language pair {initial!r}. "
+            f"Use one of: {', '.join(LANGUAGE_CODES)}"
+        )
+        st.stop()
+    st.session_state.language_code = initial
 
 if "source_text" not in st.session_state:
     st.session_state.source_text = ""
@@ -44,8 +49,13 @@ if "translation_response" not in st.session_state:
 if "translation_elapsed_seconds" not in st.session_state:
     st.session_state.translation_elapsed_seconds = None
 
+if "_app_started" not in st.session_state:
+    st.session_state._app_started = True
+    st.session_state._focus_source_textarea = True
+
 if st.session_state.pop("_clear_source_after_translate", False):
     st.session_state.source_text = ""
+    st.session_state._focus_source_textarea = True
 
 model = DEFAULT_MODEL
 host = OLLAMA_HOST
@@ -58,13 +68,31 @@ elif api_ok:
 else:
     st.sidebar.error(health_msg)
 
-st.sidebar.caption(f"Language pair: **{LANG.code}** (`APP_LANGUAGE` or `--lang`)")
+st.sidebar.selectbox(
+    "Language pair",
+    options=LANGUAGE_CODES,
+    format_func=lambda code: LANGUAGE_LABELS[code],
+    key="language_code",
+)
+
+if st.session_state.get("_prev_language_code") != st.session_state.language_code:
+    if "_prev_language_code" in st.session_state:
+        st.session_state.translation_response = None
+        st.session_state.translation_elapsed_seconds = None
+st.session_state._prev_language_code = st.session_state.language_code
+
+LANG = load_language(st.session_state.language_code)
+
+st.title(LANG.heading)
+st.caption(LANG.caption)
+
 render_special_character_buttons(LANG)
 
 # Apply character append before the text_area widget (Streamlit syncs widget state at rerun start).
 _pending_char = st.session_state.pop("_pending_source_append", None)
 if _pending_char is not None:
     st.session_state.source_text = (st.session_state.get("source_text") or "") + _pending_char
+    st.session_state._focus_source_textarea = True
 
 source = st.text_area(
     LANG.source_label,
@@ -72,6 +100,8 @@ source = st.text_area(
     placeholder=LANG.source_placeholder,
     key="source_text",
 )
+
+handle_source_textarea_focus()
 
 if st.button(
     LANG.translate_button,

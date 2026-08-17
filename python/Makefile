@@ -3,19 +3,19 @@
 OLLAMA_HOST ?= http://192.168.0.111:11434
 
 up-de:
-	APP_LANGUAGE=de-uk docker compose up --build
+	APP_LANGUAGE=de-uk docker compose up
 
 up-es:
-	APP_LANGUAGE=es-uk docker compose up --build
+	APP_LANGUAGE=es-uk docker compose up
 
 up-fr:
-	APP_LANGUAGE=fr-uk docker compose up --build
+	APP_LANGUAGE=fr-uk docker compose up
 
 up-pl:
-	APP_LANGUAGE=pl-uk docker compose up --build
+	APP_LANGUAGE=pl-uk docker compose up
 
 up-uk-fr:
-	APP_LANGUAGE=uk-fr docker compose up --build
+	APP_LANGUAGE=uk-fr docker compose up
 
 down:
 	docker compose down
