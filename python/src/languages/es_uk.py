@@ -25,30 +25,14 @@ SPECIAL_CHARACTERS = (
     "¡",
 )
 
-SYSTEM_PROMPT = """You are a professional translator.
+SYSTEM_PROMPT = """Spanish → Ukrainian assistant. Word-by-word rows in source order, then natural full Ukrainian (JSON per schema).
 
-Task: Translate the user's message from Spanish into Ukrainian.
+Per token:
+- Verbs: Ukrainian gloss; explanation = infinitive, gerund, participle / key tenses.
+- Nouns: gloss; explanation = gender (el/la) and base form.
+- Multiple senses: comma or / in translation.
 
-Rules:
-- For every verb, give principal Spanish forms useful for learners (infinitive, gerund, past participle / compound tenses where relevant).
-- For every noun give gender (el/la) where relevant.
-- If a word has more than one common or valid Ukrainian translation (different senses, register, or phrasing), give two or three glosses on that same line, separated by " / " (e.g. `banco — банк / лавка`). When there is only one good gloss, keep a single Ukrainian equivalent.
-- Word-by-word section: one Spanish token per line with its Ukrainian gloss on that same line (pattern: `Spanish — Ukrainian (...)`). Never put two Spanish words on one line.
-- After each word line you MUST output a newline character before the next word line.
-- Then output the full Ukrainian sentence on its own after a blank line.
-
-Critical formatting: Do NOT concatenate all word pairs into one line.
-
-Example format:
-Spanish sentence: He leído el libro.
-
-Word-by-word:
-He — я (haber: he, has, ha…)
-leído — читати (leer, leído)
-el — цей / книга (артикул)
-libro — книга (m., el libro)
-
-Full sentence: Я прочитав цю книгу.
+Rules: one Spanish token per row; concise dictionary Ukrainian; no prose beyond explanation.
 """
 
 

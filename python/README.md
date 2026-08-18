@@ -1,6 +1,6 @@
 # translategemma
 
-Small **Streamlit** app that takes **German** text and translates it to **Ukrainian** using a local **[Ollama](https://ollama.com/)** model (default name: `translategemma:27b`).
+Small **Streamlit** app that takes **German** text and translates it to **Ukrainian** using a local **[Ollama](https://ollama.com/)** model (default name: `translategemma:12b`).
 
 ## Prerequisites
 
@@ -43,8 +43,8 @@ Open **http://localhost:8501**.
 Ollama is expected on **another machine**. Compose defaults:
 
 - `OLLAMA_HOST=http://192.168.0.111:11434` (edit `docker-compose.yml` if your Ollama host differs)
-- `OLLAMA_MODEL=translategemma:27b`
-- `OLLAMA_NUM_CTX=32768` (32k token context window for each chat request)
+- `OLLAMA_MODEL=translategemma:12b`
+- `OLLAMA_NUM_CTX=4096` (4k token context window for each chat request)
 - `APP_LANGUAGE` — **`${APP_LANGUAGE:-de-uk}`** in Compose; override as above
 - **`network_mode: host`** (Linux) so the container uses the **same routing as your PC** and can reach `192.168.*` addresses. Without this, Docker’s bridge network sometimes cannot reach the LAN even when `curl` on the host works (VPN / split routing → errno 113).
 
@@ -66,7 +66,7 @@ export OLLAMA_HOST="0.0.0.0:11434"
 
 3. run translate llm
 ```bash
- ollama run translategemma:27b
+ ollama run translategemma:12b
 ```
 
 Also open **TCP port 11434** (or your port) in that machine’s firewall so this PC can reach it.
@@ -81,8 +81,8 @@ Use **host networking** so outbound routes match the host (needed for LAN IPs wi
 docker build -t translategemma-ui .
 docker run --rm --network host \
   -e OLLAMA_HOST=http://192.168.0.111:11434 \
-  -e OLLAMA_MODEL=translategemma:27b \
-  -e OLLAMA_NUM_CTX=32768 \
+  -e OLLAMA_MODEL=translategemma:12b \
+  -e OLLAMA_NUM_CTX=4096 \
   translategemma-ui
 ```
 
@@ -122,9 +122,9 @@ That error means **this computer cannot send packets to the IP you configured** 
 
 | Variable / UI field | Meaning |
 | --- | --- |
-| `OLLAMA_MODEL` | Model name for every translate request (default: `translategemma:27b`). Set before startup; not editable in the UI. |
+| `OLLAMA_MODEL` | Model name for every translate request (default: `translategemma:12b`). Set before startup; not editable in the UI. |
 | `OLLAMA_HOST` | Full base URL for the Ollama API (e.g. `http://192.168.0.111:11434`). Unset = Ollama client default (`127.0.0.1:11434`). |
-| `OLLAMA_NUM_CTX` | Context window in tokens passed as `options.num_ctx` on each translate (default: `32768` / 32k). |
+| `OLLAMA_NUM_CTX` | Context window in tokens passed as `options.num_ctx` on each translate (default: `4096` / 4k). |
 | `APP_LANGUAGE` | Language pair code: `de-uk`, `es-uk`, `fr-uk`, `pl-uk`, … (must exist in `src/languages/__init__.py`). |
 
 ### Which Ollama model is used?
@@ -136,7 +136,7 @@ On startup the sidebar health check calls Ollama’s **list models** API (`clien
 
 The app only uses that list to verify that **`OLLAMA_MODEL`** appears among installed models. It does **not** pick a model for you when several are installed.
 
-**Which model actually runs a translation:** only **`OLLAMA_MODEL`** (default `translategemma:27b`) on each **`/api/chat`** call when you click Translate. To use another installed model, change the env var and restart the app (name must match `ollama list` exactly, including the tag).
+**Which model actually runs a translation:** only **`OLLAMA_MODEL`** (default `translategemma:12b`) on each **`/api/chat`** call when you click Translate. To use another installed model, change the env var and restart the app (name must match `ollama list` exactly, including the tag).
 
 | Question | Answer |
 | --- | --- |
