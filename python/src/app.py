@@ -26,6 +26,7 @@ from util import (
 
 DEFAULT_MODEL = os.environ.get("OLLAMA_MODEL", "translategemma:27b")
 OLLAMA_HOST = (os.environ.get("OLLAMA_HOST") or "").strip()
+MODEL_OPTIONS = ("translategemma:27b", "translategemma:12b", "gemma4:31b")
 
 st.set_page_config(page_title="translategemma", page_icon="🌐", layout="centered")
 
@@ -42,6 +43,12 @@ if "language_code" not in st.session_state:
         st.stop()
     st.session_state.language_code = initial
 
+if "ollama_model" not in st.session_state:
+    initial_model = DEFAULT_MODEL.strip()
+    st.session_state.ollama_model = (
+        initial_model if initial_model in MODEL_OPTIONS else MODEL_OPTIONS[0]
+    )
+
 if "source_text" not in st.session_state:
     st.session_state.source_text = ""
 if "translation_response" not in st.session_state:
@@ -57,7 +64,19 @@ if st.session_state.pop("_clear_source_after_translate", False):
     st.session_state.source_text = ""
     st.session_state._focus_source_textarea = True
 
-model = DEFAULT_MODEL
+st.sidebar.selectbox(
+    "Ollama model",
+    options=MODEL_OPTIONS,
+    key="ollama_model",
+)
+
+if st.session_state.get("_prev_ollama_model") != st.session_state.ollama_model:
+    if "_prev_ollama_model" in st.session_state:
+        st.session_state.translation_response = None
+        st.session_state.translation_elapsed_seconds = None
+st.session_state._prev_ollama_model = st.session_state.ollama_model
+
+model = st.session_state.ollama_model
 host = OLLAMA_HOST
 
 api_ok, model_ok, health_msg = check_ollama_available(host, model)
@@ -106,8 +125,8 @@ handle_source_textarea_focus()
 if st.button(
     LANG.translate_button,
     type="primary",
-    disabled=not source.strip() or not api_ok,
-    help=None if api_ok else "Connect to Ollama first (set OLLAMA_HOST / OLLAMA_MODEL and restart).",
+    disabled=not source.strip() or not api_ok or not model_ok,
+    help=None if api_ok and model_ok else "Connect to Ollama and select an installed model.",
 ):
     st.session_state["_translation_started_at"] = time.perf_counter()
     raw_content = ""

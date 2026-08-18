@@ -1,13 +1,16 @@
-FROM node:20-alpine AS base
+FROM node:20-bookworm-slim AS base
 
 FROM base AS deps
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
+ENV NPM_CONFIG_REGISTRY=https://registry.npmjs.org/ \
+    NPM_CONFIG_USERCONFIG=/app/.npmrc
 RUN npm ci
 
 FROM base AS builder
 WORKDIR /app
+ENV NPM_CONFIG_REGISTRY=https://registry.npmjs.org/ \
+    NPM_CONFIG_USERCONFIG=/app/.npmrc
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1

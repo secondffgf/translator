@@ -1,4 +1,4 @@
-.PHONY: up-de up-es up-fr up-pl up-uk-fr down logs ollama-check
+.PHONY: up-de up-es up-fr up-pl up-uk-fr down logs ollama-check rebuild
 
 OLLAMA_HOST ?= http://192.168.0.111:11434
 
@@ -19,6 +19,11 @@ up-uk-fr:
 
 down:
 	docker compose down
+
+rebuild:
+	docker compose down --rmi local --remove-orphans
+	docker compose build --no-cache
+	docker compose up --build
 
 logs:
 	docker compose logs -f
